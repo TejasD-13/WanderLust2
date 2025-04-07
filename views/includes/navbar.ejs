@@ -1,0 +1,52 @@
+<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top">
+    <div class="container-fluid">
+        <a class="fa-compass" href="/" ><i class="fa-solid fa-compass"></i></a>
+        <a class="navbar-brand" href="#">WanderLust</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link"  href="/">Home</a>
+                </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/listings">All Listings</a>
+        </li>
+        <% if(currentUser) { %>
+          <li class="nav-item">
+            <a class="nav-link" href="<%= currentUser.role === 'manager' ? '/dashboard/manager' : '/dashboard/user' %>">
+              Dashboard
+            </a>
+          </li>
+          <% if(currentUser.role === 'manager') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/listings/new">New Listing</a>
+            </li>
+          <% } %>
+        <% } %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/listings/new">Add new Listing</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <% if(currentUser) { %>
+                    <li class="nav-item">
+                        <span class="nav-link">Welcome, <%= currentUser.username %></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-danger ms-2" href="/logout">Logout</a>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Register</a>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+</nav>

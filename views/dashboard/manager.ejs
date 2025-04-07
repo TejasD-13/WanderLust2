@@ -1,0 +1,66 @@
+<%- include('../includes/header') %>
+<div class="container mt-4">
+    <h2>Manager Dashboard</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <p class="card-text">₹<%= revenue %></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Occupancy Rate</h5>
+                    <p class="card-text"><%= occupancy %>%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h4>Your Listings</h4>
+            <% if(listings.length > 0) { %>
+                <div class="list-group">
+                    <% listings.forEach(listing => { %>
+                        <div class="list-group-item">
+                            <h5><%= listing.title %></h5>
+                            <a href="/listings/<%= listing._id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="alert alert-info">No listings found</div>
+            <% } %>
+        </div>
+        
+        <div class="col-md-6">
+            <h4>Recent Bookings</h4>
+            <% if(bookings.length > 0) { %>
+                <div class="list-group">
+                    <% bookings.forEach(booking => { %>
+                        <div class="list-group-item">
+                            <% if(booking.user) { %>
+                                <h5><%= booking.user.username %></h5>
+                            <% } else { %>
+                                <h5 class="text-danger">User account deleted</h5>
+                            <% } %>
+                            <p>Dates: 
+                                <%= booking.checkIn.toLocaleDateString() %> - 
+                                <%= booking.checkOut.toLocaleDateString() %>
+                            </p>
+                            <p>Amount: ₹<%= booking.totalPrice %></p>
+                            <p>Listing: <%= booking.listing.title %></p>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="alert alert-info">No bookings found</div>
+            <% } %>
+        </div>
+    </div>
+</div>
+<%- include('../includes/footer') %>
