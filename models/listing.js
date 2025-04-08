@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const Review = require("./reviews.js"); // Correct file name if it's 'reviews.js'const reviews = require("./reviews");
+
 const listingSchema = new mongoose.Schema({
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -28,12 +28,15 @@ const listingSchema = new mongoose.Schema({
   ],
 });
 
+// Use mongoose.model.models to check if Review model exists before using it
 listingSchema.post("findOneAndDelete", async(listing)=>{
   if(listing) {
-    await Review.deleteMany({_id: {$in: listing.reviews}});
+    // Check if Review model exists before using it
+    if (mongoose.models.Review) {
+      await mongoose.models.Review.deleteMany({_id: {$in: listing.reviews}});
+    }
   }
 })
 
-const Listing = mongoose.model("Listing", listingSchema);
-
-module.exports = Listing;
+// Export the model, but only create it if it doesn't already exist
+module.exports = mongoose.models.Listing || mongoose.model("Listing", listingSchema);

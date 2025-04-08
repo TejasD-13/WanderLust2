@@ -10,14 +10,14 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const flash = require("connect-flash");
 const User = require("./models/user");
-const Listing = require("./models/listing");
+const Listing = require("./models/Listing");
 const Review = require("./models/reviews");
-const Booking = require("./models/booking");
+const Booking = require("./models/Booking");
 const { listingSchema, reviewSchema } = require("./schema.js");
 const ExpressError = require("./utils/ExpressError");
 
 // MongoDB connection
-mongoose.connect("mongodb://127.0.0.1:27017/wanderlust")
+mongoose.connect("mongodb://localhost:27017/wanderlust")
     .then(() => console.log("MongoDB Connected Successfully"))
     .catch((err) => console.error("MongoDB Connection Error:", err));
 
@@ -27,7 +27,7 @@ const sessionConfig = {
     resave: false,
     saveUninitialized: true,
     store: MongoStore.create({
-        mongoUrl: "mongodb://127.0.0.1:27017/wanderlust",
+        mongoUrl: "mongodb://localhost:27017/wanderlust",
         touchAfter: 24 * 3600,
     }),
     cookie: {
@@ -160,14 +160,14 @@ app.post("/listings", isLoggedIn, async (req, res) => {
 });
 
 app.get("/listings/:id", isLoggedIn, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const listing = await Listing.findById(id).populate("reviews");
-        res.render("listings/show", { listing });
-    } catch (err) {
-        console.error(err);
-        res.send("Listing not found.");
-    }
+    const { id } = req.params;
+    const listing = await Listing.findById(id).populate({
+        path: "reviews",
+        populate: {
+            path: "author"
+        }
+    });
+    res.render("listings/show", { listing, currentUser: req.user });
 });
 
 app.get("/listings/:id/edit", isLoggedIn, async (req, res) => {
@@ -208,12 +208,20 @@ app.delete("/listings/:id", isLoggedIn, async (req, res) => {
 
 // Reviews
 app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
-    const listing = await Listing.findById(req.params.id);
-    const newReview = new Review(req.body.review);
-    listing.reviews.push(newReview);
-    await newReview.save();
-    await listing.save();
-    res.redirect(`/listings/${listing._id}`);
+    try {
+        const listing = await Listing.findById(req.params.id);
+        const newReview = new Review(req.body.review);
+        newReview.author = req.user._id;
+        listing.reviews.push(newReview);
+        await newReview.save();
+        await listing.save();
+        req.flash("success", "Review added successfully!");
+        res.redirect(`/listings/${listing._id}`);
+    } catch (err) {
+        console.error("Review Error:", err);
+        req.flash("error", "Failed to add review. Please try again.");
+        res.redirect(`/listings/${req.params.id}`);
+    }
 });
 
 app.delete("/listings/:id/reviews/:reviewId", isLoggedIn, async (req, res) => {

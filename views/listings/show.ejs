@@ -126,8 +126,20 @@
                                             <i class="bi bi-person text-primary fs-5"></i>
                                         </div>
                                         <div class="ms-3">
-                                            <h6 class="mb-0 text-dark">Guest</h6>
-                                            <small class="text-muted">Recent Visitor</small>
+                                            <h6 class="mb-0 text-dark">
+                                                <% if (listing.reviews[i].author) { %>
+                                                    <%= listing.reviews[i].author.username %>
+                                                <% } else { %>
+                                                    Guest
+                                                <% } %>
+                                            </h6>
+                                            <small class="text-muted">
+                                                <% if (listing.reviews[i].createdAt) { %>
+                                                    <%= new Date(listing.reviews[i].createdAt).toLocaleDateString() %>
+                                                <% } else { %>
+                                                    Recent Visitor
+                                                <% } %>
+                                            </small>
                                         </div>
                                     </div>
             
@@ -138,9 +150,11 @@
             
                                     <!-- Delete button aligned right -->
                                     <div class="d-flex justify-content-end">
-                                        <form action="/listings/<%= listing._id %>/reviews/<%= listing.reviews[i]._id %>?_method=DELETE" method="POST">
-                                            <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                        </form>
+                                        <% if (currentUser && listing.reviews[i].author && currentUser._id.equals(listing.reviews[i].author._id)) { %>
+                                            <form action="/listings/<%= listing._id %>/reviews/<%= listing.reviews[i]._id %>?_method=DELETE" method="POST">
+                                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </form>
+                                        <% } %>
                                     </div>
                                 </div>
                             </div>
