@@ -14,7 +14,13 @@ router.post('/login', passport.authenticate('local', {
     failureRedirect: '/login',
     failureFlash: true
 }), (req, res) => {
-    res.redirect(req.user.role === 'manager' ? '/dashboard/manager' : '/dashboard/user');
+    if (req.user.role === 'admin') {
+        res.redirect('/admin/dashboard');
+    } else if (req.user.role === 'manager') {
+        res.redirect('/dashboard/manager');
+    } else {
+        res.redirect('/listings');
+    }
 });
 
 // Show register form
@@ -35,7 +41,13 @@ router.post('/register', async (req, res, next) => {
                     req.flash('error', 'Auto-login failed. Please login manually');
                     return res.redirect('/login');
                 }
-                res.redirect(req.user.role === 'manager' ? '/dashboard/manager' : '/dashboard/user');
+                if (newUser.role === 'admin') {
+                    res.redirect('/admin/dashboard');
+                } else if (newUser.role === 'manager') {
+                    res.redirect('/dashboard/manager');
+                } else {
+                    res.redirect('/listings');
+                }
             });
         } catch (err) {
             req.flash('error', 'Registration failed: ' + err.message);

@@ -9,7 +9,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link"  href="/">Home</a>
+                    <a class="nav-link"  href="/listings">Home</a>
                 </li>
         <li class="nav-item">
           <a class="nav-link" href="/listings">All Listings</a>
@@ -23,6 +23,11 @@
           <% if(currentUser.role === 'manager') { %>
             <li class="nav-item">
               <a class="nav-link" href="/listings/new">New Listing</a>
+            </li>
+          <% } %>
+          <% if(currentUser.role === 'admin') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/dashboard">Admin Dashboard</a>
             </li>
           <% } %>
         <% } %>

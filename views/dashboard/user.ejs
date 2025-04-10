@@ -1,24 +1,178 @@
-<%- include('../includes/header') %>
-<div class="container mt-4">
-    <h2>User Dashboard</h2>
-    <div class="row">
-        <div class="col-md-12">
-            <h4>Your Bookings</h4>
+<%- include('../partials/user-navbar') %>
+
+<div class="container my-5">
+    <h1 class="text-center mb-5 fw-bold">My Bookings</h1>
+
+    <!-- User Actions -->
+    <!-- <div class="card shadow-lg mb-5 border-0">
+        <div class="card-header text-dark bg-light border-bottom">
+            <h4 class="mb-0 fw-bold">
+                <i class="bi bi-calendar-check me-2 text-primary"></i>Booking Actions
+            </h4>
+        </div>
+        <div class="card-body px-4 py-5">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card action-card border-0 shadow-sm h-100 transition">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="card-title fw-bold mb-2">
+                                    <i class="bi bi-search me-2 text-primary"></i>Browse Listings
+                                </h5>
+                                <p class="card-text text-muted">Explore and book new properties for your next adventure.</p>
+                            </div>
+                            <a href="/listings" class="btn btn-primary mt-4 w-100">View All Listings</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card action-card border-0 shadow-sm h-100 transition">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="card-title fw-bold mb-2">
+                                    <i class="bi bi-printer me-2 text-success"></i>Print Receipts
+                                </h5>
+                                <p class="card-text text-muted">Access and print receipts for all your bookings.</p>
+                            </div>
+                            <a href="/dashboard/user" class="btn btn-success mt-4 w-100">View My Bookings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- Bookings List -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-bookmark-check me-2"></i>Your Bookings</h4>
+        </div>
+        <div class="card-body">
             <% if(bookings.length > 0) { %>
-                <div class="list-group">
+                <div class="row g-4">
                     <% bookings.forEach(booking => { %>
-                        <div class="list-group-item mb-3">
-                            <h5><%= booking.listing.title %></h5>
-                            <p>Dates: <%= booking.checkIn.toDateString() %> - <%= booking.checkOut.toDateString() %></p>
-                            <p>Total: ₹<%= booking.totalPrice %></p>
-                            <a href="/listings/<%= booking.listing._id %>" class="btn btn-sm btn-primary">View Listing</a>
+                        <div class="col-md-6">
+                            <div class="card booking-card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="booking-header mb-3">
+                                        <h5 class="card-title fw-bold mb-2"><%= booking.listing.title %></h5>
+                                        <div class="d-flex gap-2">
+                                            <span class="badge bg-primary"><%= booking.days %> days</span>
+                                            <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 
+                                                booking.status === 'pending' ? 'warning' : 
+                                                booking.status === 'cancelled' ? 'danger' : 'secondary' %>">
+                                                <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="booking-details mb-4">
+                                        <div class="detail-item d-flex align-items-center mb-2">
+                                            <i class="bi bi-calendar-check me-2 text-primary"></i>
+                                            <div>
+                                                <small class="text-muted d-block">Check-in</small>
+                                                <strong><%= booking.checkIn.toLocaleDateString() %></strong>
+                                            </div>
+                                        </div>
+                                        <div class="detail-item d-flex align-items-center mb-2">
+                                            <i class="bi bi-calendar-x me-2 text-primary"></i>
+                                            <div>
+                                                <small class="text-muted d-block">Check-out</small>
+                                                <strong><%= booking.checkOut.toLocaleDateString() %></strong>
+                                            </div>
+                                        </div>
+                                        <div class="detail-item d-flex align-items-center">
+                                            <i class="bi bi-currency-rupee me-2 text-primary"></i>
+                                            <div>
+                                                <small class="text-muted d-block">Total Amount</small>
+                                                <strong>₹<%= booking.totalPrice.toLocaleString() %></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="booking-actions mt-auto">
+                                        <div class="d-flex gap-2">
+                                            <a href="/listings/<%= booking.listing._id %>" class="btn btn-primary flex-grow-1">
+                                                <i class="bi bi-eye me-1"></i>View Listing
+                                            </a>
+                                            <a href="/dashboard/receipt/<%= booking._id %>" class="btn btn-success flex-grow-1">
+                                                <i class="bi bi-printer me-1"></i>Print Receipt
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     <% }) %>
                 </div>
             <% } else { %>
-                <div class="alert alert-info">No bookings found</div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>No bookings found. Start your journey by exploring our listings!
+                </div>
+                <div class="text-center">
+                    <a href="/listings" class="btn btn-primary btn-lg">
+                        <i class="bi bi-search me-2"></i>Browse Listings
+                    </a>
+                </div>
             <% } %>
         </div>
     </div>
 </div>
-<%- include('../includes/footer') %>
+
+<!-- Custom Styles -->
+<style>
+    .action-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 1rem;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-title i {
+        font-size: 1.2rem;
+    }
+
+    .booking-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 1rem;
+    }
+
+    .booking-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .detail-item {
+        padding: 0.5rem 0;
+    }
+    
+    .detail-item i {
+        font-size: 1.2rem;
+        width: 24px;
+        text-align: center;
+    }
+    
+    .booking-header {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+    }
+    
+    .booking-details {
+        flex-grow: 1;
+    }
+    
+    .booking-actions {
+        border-top: 1px solid #eee;
+        padding-top: 1rem;
+    }
+</style>
+
+<%- include('../partials/footer') %>

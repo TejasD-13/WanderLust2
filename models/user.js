@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const userSchema = new Schema({
   role: {
     type: String,
-    enum: ['user', 'manager'],
+    enum: ['user', 'manager', 'admin'],
     required: true
   },
     username: {

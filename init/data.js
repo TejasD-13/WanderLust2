@@ -42,7 +42,7 @@ const sampleListings = [
     price: 1000,
     location: "Aspen",
     country: "United States",
-    bedrooms: 2,
+    bedroom: 2,
     beds: 2,    
     acAvailable: false,
     fanAvailable: true

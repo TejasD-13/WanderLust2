@@ -1,0 +1,96 @@
+<%- include('../partials/dashboard-navbar') %>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Booking Details</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Booking Information</h5>
+                    <p><strong>Booking ID:</strong> <%= booking._id %></p>
+                    <p><strong>Booking Date:</strong> <%= booking.createdAt.toLocaleDateString() %></p>
+                    <p><strong>Check-in:</strong> <%= booking.checkIn.toLocaleDateString() %></p>
+                    <p><strong>Check-out:</strong> <%= booking.checkOut.toLocaleDateString() %></p>
+                    <p><strong>Duration:</strong> <%= booking.days %> days</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 
+                            booking.status === 'pending' ? 'warning' : 
+                            booking.status === 'cancelled' ? 'danger' : 'secondary' %>">
+                            <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Customer Information</h5>
+                    <p><strong>Name:</strong> <%= booking.user.username %></p>
+                    <p><strong>Email:</strong> <%= booking.user.email || 'Not provided' %></p>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5>Property Information</h5>
+                    <p><strong>Property:</strong> <%= booking.listing.title %></p>
+                    <p><strong>Location:</strong> <%= booking.listing.location %>, <%= booking.listing.country %></p>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5>Additional Facilities</h5>
+                    <% if(booking.facilities && booking.facilities.length > 0) { %>
+                        <ul>
+                            <% booking.facilities.forEach(facility => { %>
+                                <li><%= facility %></li>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <p>No additional facilities selected</p>
+                    <% } %>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <h5>Payment Summary</h5>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td><strong>Base Price (per day):</strong></td>
+                                <td>₹<%= booking.listing.price %></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Number of Days:</strong></td>
+                                <td><%= booking.days %></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Additional Facilities:</strong></td>
+                                <td>₹<%= booking.totalPrice - (booking.listing.price * booking.days) %></td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>Total Amount:</strong></td>
+                                <td><strong>₹<%= booking.totalPrice %></strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="/dashboard/manager" class="btn btn-secondary">Back to Dashboard</a>
+                <% if (booking.status === 'pending') { %>
+                    <form action="/bookings/<%= booking._id %>/confirm" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-success">Confirm Booking</button>
+                    </form>
+                    <form action="/bookings/<%= booking._id %>/cancel" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Cancel Booking</button>
+                    </form>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %> 

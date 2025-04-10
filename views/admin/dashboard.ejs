@@ -1,0 +1,169 @@
+<%- include('../partials/admin-navbar') %>
+
+<div class="container my-5">
+    <h1 class="text-center mb-5 fw-bold">Admin Dashboard</h1>
+
+    <!-- Admin Actions -->
+    <!-- Admin Actions -->
+<div class="card shadow-lg mb-5 border-0">
+    <div class="card-header  text-dark bg-light border-bottom">
+        <h4 class="mb-0 fw-bold">
+            <i class="bi bi-gear-fill me-2 text-primary"></i>Admin Actions
+        </h4>
+    </div>
+
+        <div class="card-body px-4 py-5">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card action-card border-0 shadow-sm h-100 transition">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="card-title fw-bold mb-2">
+                                    <i class="bi bi-pencil-square me-2 text-primary"></i>Manage Listings
+                                </h5>
+                                <p class="card-text text-muted">View, approve, and manage all listings in the system.</p>
+                            </div>
+                            <a href="/listings" class="btn btn-primary mt-4 w-100">View All Listings</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card action-card border-0 shadow-sm h-100 transition">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="card-title fw-bold mb-2">
+                                    <i class="bi bi-plus-circle me-2 text-success"></i>Add New Listing
+                                </h5>
+                                <p class="card-text text-muted">Create a new listing directly from the admin dashboard.</p>
+                            </div>
+                            <a href="/listings/new" class="btn btn-success mt-4 w-100">Add New Listing</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Listings -->
+    <div class="card mb-5 shadow">
+        <div class="card-header bg-warning text-white">
+            <h4 class="mb-0"><i class="bi bi-hourglass-split me-2"></i>Pending Listings</h4>
+        </div>
+        <div class="card-body">
+            <% if (pendingListings && pendingListings.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Owner</th>
+                                <th>Location</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% pendingListings.forEach(listing => { %>
+                                <tr>
+                                    <td><%= listing.title %></td>
+                                    <td><%= listing.owner ? listing.owner.username : 'Unknown' %></td>
+                                    <td><%= listing.location %></td>
+                                    <td>₹<%= listing.price.toLocaleString() %></td>
+                                    <td><span class="badge bg-warning text-dark">Pending</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/listings/<%= listing._id %>" class="btn btn-info">View</a>
+                                            <form action="/admin/listings/<%= listing._id %>/approve" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-success">Approve</button>
+                                            </form>
+                                            <form action="/admin/listings/<%= listing._id %>/reject" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this listing? This action cannot be undone.')">Reject</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="alert alert-info">No pending listings found.</div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Approved Listings -->
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0"><i class="bi bi-check-circle-fill me-2"></i>Approved Listings</h4>
+        </div>
+        <div class="card-body">
+            <% if (approvedListings && approvedListings.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Owner</th>
+                                <th>Location</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% approvedListings.forEach(listing => { %>
+                                <tr>
+                                    <td><%= listing.title %></td>
+                                    <td><%= listing.owner ? listing.owner.username : 'Unknown' %></td>
+                                    <td><%= listing.location %></td>
+                                    <td>₹<%= listing.price.toLocaleString() %></td>
+                                    <td><span class="badge bg-success">Approved</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/listings/<%= listing._id %>" class="btn btn-info">View</a>
+                                            <a href="/listings/<%= listing._id %>/edit" class="btn btn-warning">Edit</a>
+                                            <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="alert alert-info">No approved listings found.</div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    .action-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 1rem;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-title i {
+        font-size: 1.2rem;
+    }
+
+    .table thead th {
+        vertical-align: middle;
+    }
+
+    .btn-group .btn {
+        min-width: 80px;
+    }
+</style>
+
+<%- include('../partials/footer') %>

@@ -126,3 +126,20 @@ card-text p {
     padding-left: 0;
     padding-right: 0;
 }
+
+/* Star Rating Styles */
+.rating {
+    display: flex;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.rating i {
+    font-size: 1rem;
+    margin-right: 0.1rem;
+}
+
+.rating span {
+    font-size: 0.9rem;
+    color: #666;
+}

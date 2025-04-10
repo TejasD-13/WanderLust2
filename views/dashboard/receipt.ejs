@@ -1,0 +1,192 @@
+<%- include('../partials/user-navbar') %>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="bi bi-receipt-cutoff me-2"></i>Booking Receipt
+                        </h4>
+                        <!-- <span class="badge bg-light text-primary fs-6">
+                            <i class="bi bi-hash me-1"></i><%= booking._id %>
+                        </span> -->
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Property Information -->
+                    <div class="property-info mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="bi bi-house-door-fill me-2"></i>Property Details
+                        </h5>
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-2"><%= booking.listing.title %></h6>
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-geo-alt me-2"></i>
+                                    <%= booking.listing.location %>, <%= booking.listing.country %>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Details -->
+                    <div class="booking-details mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="bi bi-calendar-check me-2"></i>Booking Information
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="detail-card p-3 bg-light rounded-3">
+                                    <small class="text-muted d-block">Check-in Date</small>
+                                    <strong><%= booking.checkIn.toLocaleDateString() %></strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-card p-3 bg-light rounded-3">
+                                    <small class="text-muted d-block">Check-out Date</small>
+                                    <strong><%= booking.checkOut.toLocaleDateString() %></strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-card p-3 bg-light rounded-3">
+                                    <small class="text-muted d-block">Duration</small>
+                                    <strong><%= booking.days %> days</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-card p-3 bg-light rounded-3">
+                                    <small class="text-muted d-block">Status</small>
+                                    <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 
+                                        booking.status === 'pending' ? 'warning' : 
+                                        booking.status === 'cancelled' ? 'danger' : 'secondary' %>">
+                                        <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customer Information -->
+                    <div class="customer-info mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="bi bi-person-fill me-2"></i>Customer Details
+                        </h5>
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Name:</strong> <%= booking.user.username %></p>
+                                <p class="mb-0"><strong>Email:</strong> <%= booking.user.email || 'Not provided' %></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Facilities -->
+                    <div class="facilities mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="bi bi-gear-fill me-2"></i>Additional Facilities
+                        </h5>
+                        <% if(booking.facilities && booking.facilities.length > 0) { %>
+                            <div class="d-flex flex-wrap gap-2">
+                                <% booking.facilities.forEach(facility => { %>
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-<%= facility === 'ac' ? 'snow' : 'wifi' %> me-1"></i>
+                                        <%= facility.toUpperCase() %>
+                                    </span>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <p class="text-muted mb-0">No additional facilities selected</p>
+                        <% } %>
+                    </div>
+
+                    <!-- Payment Summary -->
+                    <div class="payment-summary">
+                        <h5 class="text-primary mb-3">
+                            <i class="bi bi-cash-stack me-2"></i>Payment Summary
+                        </h5>
+                        <div class="card border-0">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <td>Base Price (per day)</td>
+                                                <td class="text-end">₹<%= booking.listing.price.toLocaleString() %></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Number of Days</td>
+                                                <td class="text-end"><%= booking.days %></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Additional Facilities</td>
+                                                <td class="text-end">₹<%= (booking.totalPrice - (booking.listing.price * booking.days)).toLocaleString() %></td>
+                                            </tr>
+                                            <tr class="border-top">
+                                                <td class="fw-bold">Total Amount</td>
+                                                <td class="text-end fw-bold text-primary">₹<%= booking.totalPrice.toLocaleString() %></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted">
+                            <small>
+                                <i class="bi bi-clock me-1"></i>
+                                Booked on <%= booking.createdAt.toLocaleDateString() %>
+                            </small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button onclick="window.print()" class="btn btn-primary">
+                                <i class="bi bi-printer me-1"></i>Print Receipt
+                            </button>
+                            <a href="/dashboard/user" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .detail-card {
+        transition: transform 0.2s ease;
+    }
+    
+    .detail-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    @media print {
+        .btn, .navbar, footer {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+        }
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+        }
+        body {
+            padding: 0 !important;
+        }
+    }
+</style>
+
+<%- include('../partials/footer') %> 

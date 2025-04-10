@@ -15,6 +15,8 @@ const Review = require("./models/reviews");
 const Booking = require("./models/Booking");
 const { listingSchema, reviewSchema } = require("./schema.js");
 const ExpressError = require("./utils/ExpressError");
+const isLoggedIn = require("./middleware/isLoggedIn");
+const isManager = require("./middleware/isManager");
 
 // MongoDB connection
 mongoose.connect("mongodb://localhost:27017/wanderlust")
@@ -94,13 +96,6 @@ app.use((req, res, next) => {
     next();
 });
 
-const isLoggedIn = (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    res.redirect("/login");
-};
-
 const validateListing = (req, res, next) => {
     let { error } = listingSchema.validate(req.body);
     if (error) {
@@ -119,28 +114,50 @@ const validateReview = (req, res, next) => {
     next();
 };
 
+// Middleware to check if user is manager or admin
+const isManagerOrAdmin = (req, res, next) => {
+    if (req.user.role !== 'manager' && req.user.role !== 'admin') {
+        req.flash('error', 'Unauthorized access');
+        return res.redirect('/listings');
+    }
+    next();
+};
+
 // Auth Routes
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
+const adminRoutes = require("./routes/admin");
+const bookingRoutes = require("./routes/bookings");
 app.use("/", authRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/admin", adminRoutes);
+app.use("/bookings", bookingRoutes);
 
 // Root Route
 app.get("/", (req, res) => {
-    res.redirect("/login");
+    res.redirect("/listings");
 });
 
 // Listings
 app.get("/listings", isLoggedIn, async (req, res) => {
-    const allListings = await Listing.find({});
-    res.render("listings/index", { allListings });
+    // If user is admin, show all listings
+    // If user is manager, show all listings
+    // If user is regular user, show only approved listings
+    let query = {};
+    
+    if (req.user.role === 'user') {
+        query = { isApproved: true };
+    }
+    
+    const allListings = await Listing.find(query).populate('reviews');
+    res.render("listings/index", { allListings, currentUser: req.user });
 });
 
-app.get("/listings/new", isLoggedIn, (req, res) => {
+app.get("/listings/new", isLoggedIn, isManagerOrAdmin, (req, res) => {
     res.render("listings/new");
 });
 
-app.post("/listings", isLoggedIn, async (req, res) => {
+app.post("/listings", isLoggedIn, isManagerOrAdmin, validateListing, async (req, res) => {
     try {
         const { listing } = req.body;
         const newListing = new Listing({
@@ -150,12 +167,15 @@ app.post("/listings", isLoggedIn, async (req, res) => {
                 filename: "listingimage",
             },
             owner: req.user._id,
+            isApproved: false // New listings are not approved by default
         });
         await newListing.save();
+        req.flash("success", "New listing created successfully! It will be visible after admin approval.");
         res.redirect(`/listings/${newListing._id}`);
     } catch (err) {
-        console.error(err);
-        res.send("Error creating listing. Please ensure all required fields are filled.");
+        console.error("Listing Error:", err);
+        req.flash("error", "Error creating listing. Please ensure all required fields are filled.");
+        res.redirect("/listings/new");
     }
 });
 
@@ -167,54 +187,92 @@ app.get("/listings/:id", isLoggedIn, async (req, res) => {
             path: "author"
         }
     });
+    
+    // Check if listing exists
+    if (!listing) {
+        req.flash("error", "Listing not found");
+        return res.redirect("/listings");
+    }
+    
+    // Check if listing is approved for regular users
+    if (req.user.role === 'user' && !listing.isApproved) {
+        req.flash("error", "This listing is not available yet. It is pending admin approval.");
+        return res.redirect("/listings");
+    }
+    
     res.render("listings/show", { listing, currentUser: req.user });
 });
 
-app.get("/listings/:id/edit", isLoggedIn, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const listing = await Listing.findById(id);
-        res.render("listings/edit", { listing });
-    } catch (err) {
-        console.error(err);
-        res.send("Listing not found.");
+app.get("/listings/:id/edit", isLoggedIn, isManagerOrAdmin, async (req, res) => {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
+    if (!listing) {
+        req.flash("error", "Listing not found");
+        return res.redirect("/listings");
     }
+    res.render("listings/edit", { listing });
 });
 
-app.put("/listings/:id", isLoggedIn, async (req, res) => {
+app.put("/listings/:id", isLoggedIn, isManagerOrAdmin, validateListing, async (req, res) => {
     try {
         const { id } = req.params;
         const { listing } = req.body;
-        const updatedListing = {
+        await Listing.findByIdAndUpdate(id, {
             ...listing,
             image: {
                 url: listing.image,
                 filename: "listingimage",
             },
-        };
-        await Listing.findByIdAndUpdate(id, updatedListing);
+        });
+        req.flash("success", "Listing updated successfully!");
         res.redirect(`/listings/${id}`);
     } catch (err) {
-        console.error(err);
-        res.send("Error updating the listing. Please try again.");
+        console.error("Listing Update Error:", err);
+        req.flash("error", "Error updating listing. Please ensure all required fields are filled.");
+        res.redirect(`/listings/${id}/edit`);
     }
 });
 
-app.delete("/listings/:id", isLoggedIn, async (req, res) => {
-    const { id } = req.params;
-    await Listing.findByIdAndDelete(id);
-    res.redirect("/listings");
+app.delete("/listings/:id", isLoggedIn, isManagerOrAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Listing.findByIdAndDelete(id);
+        req.flash("success", "Listing deleted successfully!");
+        res.redirect("/listings");
+    } catch (err) {
+        console.error("Listing Delete Error:", err);
+        req.flash("error", "Error deleting listing. Please try again.");
+        res.redirect(`/listings/${id}`);
+    }
 });
 
 // Reviews
-app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
+app.post("/listings/:id/reviews", isLoggedIn, validateReview, async (req, res) => {
     try {
+        console.log("Review submission received:", req.body);
+        
         const listing = await Listing.findById(req.params.id);
+        if (!listing) {
+            console.log("Listing not found:", req.params.id);
+            req.flash("error", "Listing not found");
+            return res.redirect("/listings");
+        }
+        
+        console.log("Creating new review with data:", req.body.review);
         const newReview = new Review(req.body.review);
         newReview.author = req.user._id;
-        listing.reviews.push(newReview);
+        
+        console.log("Saving review to database...");
         await newReview.save();
-        await listing.save();
+        
+        console.log("Adding review to listing...");
+        await Listing.findByIdAndUpdate(
+            req.params.id,
+            { $push: { reviews: newReview._id } },
+            { new: true }
+        );
+        
+        console.log("Review added successfully!");
         req.flash("success", "Review added successfully!");
         res.redirect(`/listings/${listing._id}`);
     } catch (err) {
@@ -225,56 +283,79 @@ app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
 });
 
 app.delete("/listings/:id/reviews/:reviewId", isLoggedIn, async (req, res) => {
-    const { id, reviewId } = req.params;
-    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
-    await Review.findByIdAndDelete(reviewId);
-    res.redirect(`/listings/${id}`);
+    try {
+        const { id, reviewId } = req.params;
+        const review = await Review.findById(reviewId);
+        
+        if (!review) {
+            req.flash("error", "Review not found");
+            return res.redirect(`/listings/${id}`);
+        }
+        
+        // Check if the user is the author of the review
+        if (!review.author.equals(req.user._id)) {
+            req.flash("error", "You don't have permission to delete this review");
+            return res.redirect(`/listings/${id}`);
+        }
+        
+        await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+        await Review.findByIdAndDelete(reviewId);
+        req.flash("success", "Review deleted successfully!");
+        res.redirect(`/listings/${id}`);
+    } catch (err) {
+        console.error("Review Deletion Error:", err);
+        req.flash("error", "Failed to delete review. Please try again.");
+        res.redirect(`/listings/${req.params.id}`);
+    }
 });
 
 // Booking
 app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
-    const { id } = req.params;
-    const { days, facilities } = req.body;
-    const listing = await Listing.findById(id);
-    if (!listing) return res.send("Listing not found.");
+    try {
+        const { id } = req.params;
+        const { checkIn, checkOut, days, facilities } = req.body;
+        
+        const listing = await Listing.findById(id);
+        if (!listing) {
+            req.flash("error", "Listing not found");
+            return res.redirect("/listings");
+        }
 
-    const basePrice = listing.price * days;
-    const facilityPrices = { ac: 100, wifi: 50 };
-    let extraCharge = 0;
+        // Calculate base price
+        const basePrice = listing.price * days;
+        
+        // Calculate facilities price
+        const facilityPrices = { ac: 100, wifi: 50 };
+        let extraCharge = 0;
+        const selectedFacilities = Array.isArray(facilities) ? facilities : facilities ? [facilities] : [];
+        selectedFacilities.forEach((f) => {
+            extraCharge += facilityPrices[f] || 0;
+        });
 
-    const selectedFacilities = Array.isArray(facilities)
-        ? facilities
-        : facilities
-        ? [facilities]
-        : [];
+        // Calculate total price
+        const totalPrice = basePrice + extraCharge;
 
-    selectedFacilities.forEach((f) => {
-        extraCharge += facilityPrices[f] || 0;
-    });
-
-    const totalPrice = basePrice + extraCharge;
-
-    const booking = new Booking({
-        user: req.user._id,
-        listing: id,
-        days,
-        checkIn: new Date(),
-        checkOut: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
-        facilities: selectedFacilities,
-        totalPrice,
-    });
-
-    await booking.save();
-
-    res.render("listings/receipt", {
-        listing,
-        bookingReceipt: {
+        // Create new booking
+        const booking = new Booking({
+            user: req.user._id,
+            listing: id,
             days,
+            checkIn: new Date(checkIn),
+            checkOut: new Date(checkOut),
             facilities: selectedFacilities,
-            basePrice: listing.price,
-            total: totalPrice,
-        },
-    });
+            totalPrice,
+            status: 'pending'
+        });
+
+        await booking.save();
+
+        // Redirect to booking receipt
+        res.redirect(`/dashboard/receipt/${booking._id}`);
+    } catch (err) {
+        console.error("Booking Error:", err);
+        req.flash("error", "Failed to create booking. Please try again.");
+        res.redirect(`/listings/${req.params.id}`);
+    }
 });
 
 app.get("/listings/:id/receipt", isLoggedIn, async (req, res) => {

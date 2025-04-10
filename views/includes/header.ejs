@@ -21,6 +21,16 @@
         <h1>WanderLust</h1>
         <nav>
             <a href="/listings">All Listings</a>
-            <a href="/listings/new">Add Listing</a>
+            <% if(currentUser) { %>
+                <a href="/dashboard/user">My Bookings</a>
+                <% if(currentUser.role === 'manager') { %>
+                    <a href="/dashboard/manager">Manager Dashboard</a>
+                    <a href="/listings/new">Add Listing</a>
+                <% } %>
+                <a href="/logout">Logout</a>
+            <% } else { %>
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
+            <% } %>
         </nav>
     </header>

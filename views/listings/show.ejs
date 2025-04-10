@@ -60,20 +60,58 @@
         <div class="col-lg-8">
             <div class="card mt-5 p-4">
                 <h4 class="mb-3">Book Your Stay</h4>
-                <form action="/listings/<%= listing._id %>/book" method="POST">
-                    <div class="mb-3">
-                        <label for="days" class="form-label">Days to Stay:</label>
-                        <input type="number" name="days" id="days" class="form-control" min="1" required>
+                <form action="/listings/<%= listing._id %>/book" method="POST" id="bookingForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="checkIn" class="form-label">Check-in Date:</label>
+                            <input type="date" name="checkIn" id="checkIn" class="form-control" required 
+                                   min="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="checkOut" class="form-label">Check-out Date:</label>
+                            <input type="date" name="checkOut" id="checkOut" class="form-control" required>
+                        </div>
                     </div>
 
-                    <label class="form-label">Select Facilities:</label>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="facilities" value="ac" id="ac">
-                        <label class="form-check-label" for="ac">AC (+₹100)</label>
+                    <div class="mb-3">
+                        <label for="days" class="form-label">Duration:</label>
+                        <input type="number" name="days" id="days" class="form-control" min="1" readonly>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="facilities" value="wifi" id="wifi">
-                        <label class="form-check-label" for="wifi">WiFi (+₹50)</label>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Facilities:</label>
+                        <div class="form-check">
+                            <input class="form-check-input facility-checkbox" type="checkbox" name="facilities" value="ac" id="ac">
+                            <label class="form-check-label" for="ac">AC (+₹100)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input facility-checkbox" type="checkbox" name="facilities" value="wifi" id="wifi">
+                            <label class="form-check-label" for="wifi">WiFi (+₹50)</label>
+                        </div>
+                    </div>
+
+                    <!-- Price Summary -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Price Summary</h5>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Base Price (per day):</span>
+                                <span>₹<%= listing.price %></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Duration:</span>
+                                <span id="durationDisplay">0 days</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Additional Facilities:</span>
+                                <span id="facilitiesPrice">₹0</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total Amount:</span>
+                                <span id="totalPrice">₹0</span>
+                            </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-success mt-3">Book Now</button>
@@ -87,18 +125,19 @@
         <div class="col-lg-8">
             <div class="bg-light p-4 rounded-4 shadow-sm mb-5">
                 <h4 class="mb-4 text-center text-dark">Leave a Review</h4>
-                <form action="/listings/<%= listing.id %>/reviews" method="POST" class="needs-validation" novalidate>
+                <form action="/listings/<%= listing._id %>/reviews" method="POST" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="rating" class="form-label">Rating (1-5)</label>
-                        <input type="range" class="form-range" min="1" max="5" id="rating" name="review[rating]">
+                        <input type="number" class="form-control" min="1" max="5" id="rating" name="review[rating]" required>
+                        <div class="invalid-feedback">Please select a rating between 1 and 5.</div>
                     </div>
                     <div class="mb-3">
                         <label for="comment" class="form-label">Comment</label>
-                        <textarea class="form-control" id="comment" name="review[comment]" rows="4" required></textarea>
-                        <div class="invalid-feedback">Please leave a comment.</div>
+                        <textarea class="form-control" id="comment" name="review[comment]" rows="4" required minlength="10"></textarea>
+                        <div class="invalid-feedback">Please leave a comment (minimum 10 characters).</div>
                     </div>
                     <div class="d-grid">
-                        <button class="btn btn-dark">Submit Review</button>
+                        <button type="submit" class="btn btn-dark">Submit Review</button>
                     </div>
                 </form>
             </div>
@@ -167,3 +206,87 @@
         </div>
     </div>
 </div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    
+    // Fetch all forms with the 'needs-validation' class
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    // Loop over them and prevent submission
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.getElementById('checkIn');
+    const checkOutInput = document.getElementById('checkOut');
+    const daysInput = document.getElementById('days');
+    const durationDisplay = document.getElementById('durationDisplay');
+    const facilitiesPrice = document.getElementById('facilitiesPrice');
+    const totalPrice = document.getElementById('totalPrice');
+    const facilityCheckboxes = document.querySelectorAll('.facility-checkbox');
+    const basePrice = <%= listing.price %>;
+
+    // Set minimum check-out date to check-in date
+    checkInInput.addEventListener('change', function() {
+        checkOutInput.min = this.value;
+        if (checkOutInput.value && checkOutInput.value < this.value) {
+            checkOutInput.value = this.value;
+        }
+        calculateDays();
+    });
+
+    checkOutInput.addEventListener('change', calculateDays);
+    facilityCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculateTotal);
+    });
+
+    function calculateDays() {
+        if (checkInInput.value && checkOutInput.value) {
+            const checkIn = new Date(checkInInput.value);
+            const checkOut = new Date(checkOutInput.value);
+            const diffTime = Math.abs(checkOut - checkIn);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 0) {
+                daysInput.value = diffDays;
+                durationDisplay.textContent = `${diffDays} days`;
+                calculateTotal();
+            } else {
+                daysInput.value = '';
+                durationDisplay.textContent = '0 days';
+                calculateTotal();
+            }
+        }
+    }
+
+    function calculateTotal() {
+        const days = parseInt(daysInput.value) || 0;
+        let facilitiesTotal = 0;
+        
+        facilityCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                if (checkbox.value === 'ac') facilitiesTotal += 100;
+                if (checkbox.value === 'wifi') facilitiesTotal += 50;
+            }
+        });
+
+        const baseTotal = basePrice * days;
+        const total = baseTotal + facilitiesTotal;
+
+        facilitiesPrice.textContent = `₹${facilitiesTotal}`;
+        totalPrice.textContent = `₹${total}`;
+    }
+});
+</script>

@@ -4,18 +4,52 @@
 
     <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1">
         <% for (let listing of allListings) { %>
-        <a href="/listings/<%= listing._id %>" style="text-decoration: none;">
-            <div class="card listing-card">
-                <img src="<%= listing.image?.url || '/images/default-image.jpg' %>" class="card-img-top" style="height: 20rem;" alt="listing_img">
-                <div class="card-body">
-                    <p class="card-text">
-                        <b><%= listing.title %></b>
-                        <br>
-                        &#8377; <%= listing.price ? listing.price.toLocaleString("en-IN") : "Price not available" %> / night
-                    </p>
-                </div>
-            </div>
-        </a>
+            <% if (currentUser.role === 'user' ? listing.isApproved : true) { %>
+                <a href="/listings/<%= listing._id %>" style="text-decoration: none;">
+                    <div class="card listing-card">
+                        <img src="<%= listing.image?.url || '/images/default-image.jpg' %>" class="card-img-top" style="height: 20rem;" alt="listing_img">
+                        <div class="card-body">
+                            <p class="card-text">
+                                <b><%= listing.title %></b>
+                                <br>
+                                &#8377; <%= listing.price ? listing.price.toLocaleString("en-IN") : "Price not available" %> / night
+                                <br>
+                                <% if (currentUser && (currentUser.role === 'manager' || currentUser.role === 'admin')) { %>
+                                    <span class="badge bg-<%= listing.isApproved ? 'success' : 'warning' %>">
+                                        <%= listing.isApproved ? 'Approved' : 'Pending Approval' %>
+                                    </span>
+                                    <br>
+                                <% } %>
+                                <% 
+                                    // Calculate average rating
+                                    let avgRating = 0;
+                                    if (listing.reviews && listing.reviews.length > 0) {
+                                        const totalRating = listing.reviews.reduce((sum, review) => sum + review.rating, 0);
+                                        avgRating = totalRating / listing.reviews.length;
+                                    }
+                                    
+                                    // Display stars based on rating
+                                    const fullStars = Math.floor(avgRating);
+                                    const halfStar = avgRating % 1 >= 0.5;
+                                    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+                                %>
+                                <div class="rating">
+                                    <% for (let i = 0; i < fullStars; i++) { %>
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    <% } %>
+                                    <% if (halfStar) { %>
+                                        <i class="bi bi-star-half text-warning"></i>
+                                    <% } %>
+                                    <% for (let i = 0; i < emptyStars; i++) { %>
+                                        <i class="bi bi-star text-warning"></i>
+                                    <% } %>
+                                    <span class="ms-1"><%= avgRating.toFixed(1) %> (<%= listing.reviews ? listing.reviews.length : 0 %> reviews)</span>
+                                </div>
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            <% } %>
         <% } %>
     </div>
 </body>

@@ -26,6 +26,10 @@ const listingSchema = new mongoose.Schema({
         ref: "Review"
     },
   ],
+  isApproved: {
+    type: Boolean,
+    default: false
+  }
 });
 
 // Use mongoose.model.models to check if Review model exists before using it
