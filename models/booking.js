@@ -29,6 +29,11 @@ const bookingSchema = new Schema({
         type: Date,
         required: true
     },
+    aadharNumber: {
+        type: String,
+        required: true,
+        match: [/^[0-9]{12}$/, 'Please enter a valid 12-digit Aadhar number']
+    },
     status: {
         type: String,
         enum: ['pending', 'confirmed', 'cancelled', 'completed'],

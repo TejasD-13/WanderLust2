@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const reviewSchema = new Schema({
-    comment: String, // Corrected 'commnet' to 'comment'
+    comment: String, 
     rating: {
         type: Number,
         min: 1,
@@ -19,5 +19,4 @@ const reviewSchema = new Schema({
     }
 });
 
-// Export the model, but only create it if it doesn't already exist
 module.exports = mongoose.models.Review || mongoose.model("Review", reviewSchema);

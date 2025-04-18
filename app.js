@@ -313,7 +313,7 @@ app.delete("/listings/:id/reviews/:reviewId", isLoggedIn, async (req, res) => {
 app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
     try {
         const { id } = req.params;
-        const { checkIn, checkOut, days, facilities } = req.body;
+        const { checkIn, checkOut, days, facilities, aadharNumber } = req.body;
         
         const listing = await Listing.findById(id);
         if (!listing) {
@@ -344,6 +344,7 @@ app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
             checkOut: new Date(checkOut),
             facilities: selectedFacilities,
             totalPrice,
+            aadharNumber,
             status: 'pending'
         });
 

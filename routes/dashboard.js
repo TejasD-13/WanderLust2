@@ -72,6 +72,39 @@ router.get("/manager", isLoggedIn, isManager, async (req, res) => {
         // Filter out bookings with invalid references
         const validBookings = bookings.filter(booking => booking.listing && booking.user);
 
+        // Get filtered bookings based on date range
+        let filteredBookings = [];
+        if (req.query.startDate && req.query.endDate) {
+            // Convert string dates to Date objects for comparison
+            const filterStartDate = new Date(req.query.startDate);
+            const filterEndDate = new Date(req.query.endDate);
+            
+            // Set time to beginning and end of day for proper comparison
+            filterStartDate.setHours(0, 0, 0, 0);
+            filterEndDate.setHours(23, 59, 59, 999);
+            
+            console.log('Filtering bookings between:', filterStartDate, 'and', filterEndDate);
+            
+            filteredBookings = validBookings.filter(booking => {
+                // Convert booking dates to Date objects
+                const bookingCheckIn = new Date(booking.checkIn);
+                const bookingCheckOut = new Date(booking.checkOut);
+                
+                // Check if booking dates overlap with filter dates
+                // A booking is included if:
+                // 1. Check-in date is within the filter range, OR
+                // 2. Check-out date is within the filter range, OR
+                // 3. Booking spans the entire filter range
+                return (
+                    (bookingCheckIn >= filterStartDate && bookingCheckIn <= filterEndDate) ||
+                    (bookingCheckOut >= filterStartDate && bookingCheckOut <= filterEndDate) ||
+                    (bookingCheckIn <= filterStartDate && bookingCheckOut >= filterEndDate)
+                );
+            });
+            
+            console.log('Found', filteredBookings.length, 'bookings in the date range');
+        }
+
         // If there are any invalid bookings, log them and remove them
         if (validBookings.length < bookings.length) {
             console.warn(`Found ${bookings.length - validBookings.length} bookings with invalid references`);
@@ -144,7 +177,8 @@ router.get("/manager", isLoggedIn, isManager, async (req, res) => {
             chartData: JSON.stringify(chartData),
             startDate: startDate.toISOString().split('T')[0],
             endDate: endDate.toISOString().split('T')[0],
-            bookings: validBookings
+            bookings: validBookings,
+            filteredBookings
         });
     } catch (err) {
         console.error("Dashboard Error:", err);

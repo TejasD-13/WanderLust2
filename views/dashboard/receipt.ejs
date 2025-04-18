@@ -127,6 +127,14 @@
                                                 <td class="fw-bold">Total Amount</td>
                                                 <td class="text-end fw-bold text-primary">₹<%= booking.totalPrice.toLocaleString() %></td>
                                             </tr>
+                                            <tr class="border-top">
+                                                <td>Advance Amount Paid (20%)</td>
+                                                <td class="text-end text-success">₹<%= Math.round(booking.totalPrice * 0.2).toLocaleString() %></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold">Remaining Amount</td>
+                                                <td class="text-end fw-bold text-warning">₹<%= Math.round(booking.totalPrice * 0.8).toLocaleString() %></td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>

@@ -6,13 +6,13 @@
     <!-- Date Filter Form -->
     <div class="card mb-4">
         <div class="card-body">
-            <form id="dateFilterForm" class="row g-3">
+            <form action="/dashboard/manager" method="GET" class="row g-3">
                 <div class="col-md-4">
                     <label for="startDate" class="form-label">Start Date</label>
                     <input type="date" class="form-control" id="startDate" name="startDate" 
                            value="<%= startDate %>" required>
                 </div>
-                <div class="col-md-4">
+        <div class="col-md-4">
                     <label for="endDate" class="form-label">End Date</label>
                     <input type="date" class="form-control" id="endDate" name="endDate" 
                            value="<%= endDate %>" required>
@@ -23,6 +23,82 @@
             </form>
         </div>
     </div>
+
+    <!-- Filtered Bookings Section -->
+    <% if (startDate && endDate) { %>
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Filtered Bookings</h3>
+                    <span class="badge bg-light text-info fs-6">
+                        <i class="bi bi-hash me-1"></i><%= filteredBookings.length %> Bookings
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Listing</th>
+                                <th>User</th>
+                                <th>Check In</th>
+                                <th>Check Out</th>
+                                <th>Total Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(filteredBookings.length > 0) { %>
+                                <% filteredBookings.forEach(booking => { %>
+                                    <tr>
+                                        <td><small><%= booking._id %></small></td>
+                                        <td><%= booking.listing ? booking.listing.title : 'Deleted Listing' %></td>
+                                        <td><%= booking.user ? booking.user.username : 'Deleted User' %></td>
+                                        <td><%= new Date(booking.checkIn).toLocaleDateString() %></td>
+                                        <td><%= new Date(booking.checkOut).toLocaleDateString() %></td>
+                                        <td>₹<%= booking.totalPrice.toLocaleString() %></td>
+                                        <td>
+                                            <span class="badge bg-<%= (booking.status || 'pending') === 'confirmed' ? 'success' : 
+                                                (booking.status || 'pending') === 'pending' ? 'warning' : 
+                                                (booking.status || 'pending') === 'cancelled' ? 'danger' : 'secondary' %>">
+                                                <%= ((booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)) %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="/bookings/<%= booking._id %>" class="btn btn-sm btn-info">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <% if ((booking.status || 'pending') === 'pending') { %>
+                                                    <form action="/bookings/<%= booking._id %>/confirm" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            <i class="bi bi-check-lg"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form action="/bookings/<%= booking._id %>/cancel" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" class="text-center">No bookings found for the selected period.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <% } %>
 
     <!-- Analytics Cards -->
     <div class="row mb-4">
@@ -50,14 +126,14 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <!-- <div class="col-md-3">
             <div class="card dashboard-card">
                 <div class="card-body">
                     <h5 class="card-title">Occupancy Rate</h5>
                     <h2 class="card-text"><%= analytics.occupancyRate.toFixed(1) %>%</h2>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 
     <!-- Charts -->
@@ -80,11 +156,11 @@
                         <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
+    
 <!-- Bookings Table -->
 <div class="container mt-4">
     <div class="card dashboard-card">
@@ -94,7 +170,7 @@
                 <span class="badge bg-light text-primary fs-6">
                     <i class="bi bi-hash me-1"></i><%= bookings.length %> Total
                 </span>
-            </div>
+                </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -112,8 +188,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% if(bookings.length > 0) { %>
-                            <% bookings.forEach(booking => { %>
+            <% if(bookings.length > 0) { %>
+                    <% bookings.forEach(booking => { %>
                                 <tr>
                                     <td><small><%= booking._id %></small></td>
                                     <td><%= booking.listing ? booking.listing.title : 'Deleted Listing' %></td>
@@ -144,16 +220,16 @@
                                                         <i class="bi bi-x-lg"></i>
                                                     </button>
                                                 </form>
-                                            <% } %>
-                                        </div>
+                            <% } %>
+                        </div>
                                     </td>
                                 </tr>
                             <% }); %>
-                        <% } else { %>
+            <% } else { %>
                             <tr>
                                 <td colspan="8" class="text-center">No bookings found.</td>
                             </tr>
-                        <% } %>
+            <% } %>
                     </tbody>
                 </table>
             </div>
@@ -284,15 +360,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Date filter form submission
-        document.getElementById('dateFilterForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            
-            if (startDate && endDate) {
-                window.location.href = `/dashboard/manager?startDate=${startDate}&endDate=${endDate}`;
-            }
-        });
+        const dateFilterForm = document.querySelector('form[action="/dashboard/manager"]');
+        if (dateFilterForm) {
+            dateFilterForm.addEventListener('submit', function(e) {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                if (!startDate || !endDate) {
+                    e.preventDefault();
+                    alert('Please select both start and end dates');
+                    return;
+                }
+            });
+        }
     } catch (error) {
         console.error('Error initializing charts:', error);
         // Display error message to user

@@ -26,6 +26,7 @@
                     <h5>Customer Information</h5>
                     <p><strong>Name:</strong> <%= booking.user.username %></p>
                     <p><strong>Email:</strong> <%= booking.user.email || 'Not provided' %></p>
+                    <p><strong>Aadhar Number:</strong> <%= booking.aadharNumber %></p>
                 </div>
             </div>
             
@@ -72,6 +73,14 @@
                             <tr class="table-primary">
                                 <td><strong>Total Amount:</strong></td>
                                 <td><strong>₹<%= booking.totalPrice %></strong></td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><strong>Advance Amount Paid (20%):</strong></td>
+                                <td><strong>₹<%= Math.round(booking.totalPrice * 0.2) %></strong></td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td><strong>Remaining Amount:</strong></td>
+                                <td><strong>₹<%= booking.totalPrice - Math.round(booking.totalPrice * 0.2) %></strong></td>
                             </tr>
                         </tbody>
                     </table>
